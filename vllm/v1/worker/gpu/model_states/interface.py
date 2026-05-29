@@ -53,6 +53,10 @@ class ModelState(ABC):
     def add_request(self, req_index: int, new_req_data: NewRequestData) -> None:
         return None
 
+    def remove_request(self, req_id: str) -> None:
+        """Drop any per-request state on finish/preemption/stream re-add."""
+        return None
+
     def apply_staged_writes(self) -> None:
         return None
 
