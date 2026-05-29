@@ -31,6 +31,11 @@ class ParakeetTDTModelState(DefaultModelState):
     def get_supported_generation_tasks(self):
         return ("transcription",)
 
+    def remove_request(self, req_id: str) -> None:
+        # Called by the runner on finish, preemption and streaming re-add, so
+        # the transcript cache tracks the live request set exactly.
+        self.transcripts.pop(req_id, None)
+
     def get_mm_embeddings(
         self,
         scheduled_encoder_inputs: dict[str, list[int]],
@@ -85,11 +90,4 @@ class ParakeetTDTModelState(DefaultModelState):
         model_inputs["forced_token_ids"] = torch.tensor(
             forced, dtype=torch.long, device=self.device
         )
-
-        # Drop transcripts for requests no longer in the batch (best-effort;
-        # finished requests never reappear). Keeps the cache from growing.
-        live = set(input_batch.req_ids)
-        for stale in [r for r in self.transcripts if r not in live]:
-            del self.transcripts[stale]
-
         return model_inputs
